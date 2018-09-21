@@ -67,3 +67,27 @@ func (m *PointsDAO) FindAll() ([]Point, error) {
 
 	return points, err1
 }
+
+func (m *PointsDAO) Insert(point Point) error {
+
+	var retErr error
+
+	av, err := dynamodbattribute.MarshalMap(point)
+	if err != nil {
+		fmt.Println(err)
+		retErr = err
+	}
+
+	req := &dynamodb.PutItemInput{
+		TableName: aws.String("Points"),
+		Item:      av,
+	}
+
+	var _, err1 = db.PutItem(req)
+	if err1 != nil {
+		fmt.Println(err1)
+		retErr = err1
+	}
+
+	return retErr
+}
