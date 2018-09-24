@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"time"
 
 	. "github.com/dwdii/go-dwdii/restapi-sandbox/dao"
 	. "github.com/dwdii/go-dwdii/restapi-sandbox/models"
@@ -25,6 +26,19 @@ func AllPointsEndPoint(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func FindUserPointEndPoint(w http.ResponseWriter, r *http.Request) {
+	//fmt.Fprintln(w, "not implemented yet!")
+
+	params := mux.Vars(r)
+
+	res, err := dao.FindByUserId(params["userid"])
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, err.Error())
+	} else {
+		respondWithJson(w, http.StatusOK, res)
+	}
+}
+
 func CreatePointEndPoint(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
@@ -37,6 +51,7 @@ func CreatePointEndPoint(w http.ResponseWriter, r *http.Request) {
 
 	params := mux.Vars(r)
 	point.UserId = params["userid"]
+	point.Timestamp = time.Now().UTC().Unix()
 
 	err := dao.Insert(point)
 	if err != nil {
@@ -63,6 +78,7 @@ func main() {
 	r := mux.NewRouter()
 	r.HandleFunc("/points", AllPointsEndPoint).Methods("GET")
 	r.HandleFunc("/points/{userid}", CreatePointEndPoint).Methods("POST")
+	r.HandleFunc("/points/{userid}", FindUserPointEndPoint).Methods("GET")
 	if err := http.ListenAndServe(":3000", r); err != nil {
 		log.Fatal(err)
 	}

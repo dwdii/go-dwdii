@@ -45,13 +45,42 @@ func (m *PointsDAO) Connect() {
 func (m *PointsDAO) FindAll() ([]Point, error) {
 	var points []Point
 	req := &dynamodb.QueryInput{
-		TableName: aws.String("Points"),
+		TableName:        aws.String("Points"),
+		IndexName:        aws.String("timestamp-index"),
+		ScanIndexForward: aws.Bool(true),
+		Select:           aws.String("ALL_PROJECTED_ATTRIBUTES"),
 		KeyConditions: map[string]*dynamodb.Condition{
-			"UserId": {
+			"timestamp": {
 				ComparisonOperator: aws.String("EQ"),
 				AttributeValueList: []*dynamodb.AttributeValue{
 					{
-						S: aws.String("dwdii"),
+						N: aws.String("1537753935"), //aws.String(strconv.FormatInt(time.Now().AddDate(0, 0, -7).UTC().Unix(), 10)), // In past 7 days
+					},
+				},
+			},
+		},
+	}
+
+	var resp1, err1 = db.Query(req)
+	if err1 != nil {
+		fmt.Println(err1)
+	} else {
+		err1 = dynamodbattribute.UnmarshalListOfMaps(resp1.Items, &points)
+	}
+
+	return points, err1
+}
+
+func (m *PointsDAO) FindByUserId(userId string) ([]Point, error) {
+	var points []Point
+	req := &dynamodb.QueryInput{
+		TableName: aws.String("Points"),
+		KeyConditions: map[string]*dynamodb.Condition{
+			"userid": {
+				ComparisonOperator: aws.String("EQ"),
+				AttributeValueList: []*dynamodb.AttributeValue{
+					{
+						S: aws.String(userId),
 					},
 				},
 			},
